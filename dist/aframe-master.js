@@ -23137,11 +23137,7 @@ module.exports = anime;
 		this.enabled = false;
 		this.isPresenting = false;
 
-		this.getCameraPose = function () {
-			return pose;
-		};
-
-		this.getController = function (id) {
+		this.getController = function (index) {
 			var controller = controllers[index];
 
 			if (controller === undefined) {
@@ -53568,7 +53564,7 @@ module.exports={
     "present": "0.0.6",
     "promise-polyfill": "^3.1.0",
     "super-animejs": "^3.1.0",
-    "super-three": "zakharvoit/three.js#5849fe59c0b56a4993f4b758c1695bfd58f0a8ca",
+    "super-three": "zakharvoit/three.js#dc8018029ab07307d7da26841d21f4fd16759487",
     "three-bmfont-text": "dmarcos/three-bmfont-text#1babdf8507c731a18f8af3b807292e2b9740955e",
     "webvr-polyfill": "^0.10.12"
   },
@@ -69466,7 +69462,7 @@ _dereq_('./core/a-mixin');
 _dereq_('./extras/components/');
 _dereq_('./extras/primitives/');
 
-console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #d5aaf46b)');
+console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #d63fe7db)');
 console.log('THREE Version (https://github.com/supermedium/three.js):',
             pkg.dependencies['super-three']);
 console.log('WebVR Polyfill Version:', pkg.dependencies['webvr-polyfill']);
