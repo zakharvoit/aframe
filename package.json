@@ -46,8 +46,9 @@
     "object-assign": "^4.0.1",
     "present": "0.0.6",
     "promise-polyfill": "^3.1.0",
+    "registry.npmjs.org": "^1.0.1",
     "super-animejs": "^3.1.0",
-    "super-three": "zakharvoit/three.js#adbce7f87030af0bc57533128cf0236c44ab52d7",
+    "super-three": "zakharvoit/three.js#a205b76da34c318c393d54b2dd92b8d5cf3088ee",
     "three-bmfont-text": "dmarcos/three-bmfont-text#1babdf8507c731a18f8af3b807292e2b9740955e",
     "webvr-polyfill": "^0.10.12"
   },

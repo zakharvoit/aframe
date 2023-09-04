@@ -222,6 +222,22 @@ module.exports = {
 };
 
 },{}],5:[function(_dereq_,module,exports){
+var Buffer = _dereq_('buffer').Buffer; // for use with browserify
+
+module.exports = function (a, b) {
+    if (!Buffer.isBuffer(a)) return undefined;
+    if (!Buffer.isBuffer(b)) return undefined;
+    if (typeof a.equals === 'function') return a.equals(b);
+    if (a.length !== b.length) return false;
+    
+    for (var i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    
+    return true;
+};
+
+},{"buffer":6}],6:[function(_dereq_,module,exports){
 (function (global,Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -2015,23 +2031,7 @@ function isnan (val) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},_dereq_("buffer").Buffer)
 
-},{"base64-js":3,"buffer":5,"ieee754":15,"isarray":20}],6:[function(_dereq_,module,exports){
-var Buffer = _dereq_('buffer').Buffer; // for use with browserify
-
-module.exports = function (a, b) {
-    if (!Buffer.isBuffer(a)) return undefined;
-    if (!Buffer.isBuffer(b)) return undefined;
-    if (typeof a.equals === 'function') return a.equals(b);
-    if (a.length !== b.length) return false;
-    
-    for (var i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) return false;
-    }
-    
-    return true;
-};
-
-},{"buffer":5}],7:[function(_dereq_,module,exports){
+},{"base64-js":3,"buffer":6,"ieee754":15,"isarray":20}],7:[function(_dereq_,module,exports){
 // Polyfill for creating CustomEvents on IE9/10/11
 
 // code pulled from:
@@ -3191,7 +3191,7 @@ function getBinaryOpts(opt) {
 
 }).call(this)}).call(this,_dereq_("buffer").Buffer)
 
-},{"./lib/is-binary":23,"buffer":5,"parse-bmfont-ascii":25,"parse-bmfont-binary":26,"parse-bmfont-xml":27,"xhr":47,"xtend":49}],23:[function(_dereq_,module,exports){
+},{"./lib/is-binary":23,"buffer":6,"parse-bmfont-ascii":25,"parse-bmfont-binary":26,"parse-bmfont-xml":27,"xhr":47,"xtend":49}],23:[function(_dereq_,module,exports){
 (function (Buffer){(function (){
 var equal = _dereq_('buffer-equal')
 var HEADER = Buffer.from([66, 77, 70, 3])
@@ -3203,7 +3203,7 @@ module.exports = function(buf) {
 }
 }).call(this)}).call(this,_dereq_("buffer").Buffer)
 
-},{"buffer":5,"buffer-equal":6}],24:[function(_dereq_,module,exports){
+},{"buffer":6,"buffer-equal":5}],24:[function(_dereq_,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -14623,17 +14623,17 @@ module.exports = anime;
 		clone: function clone() {
 			/*
 			 // Handle primitives
-					 const parameters = this.parameters;
-					 if ( parameters !== undefined ) {
-					 const values = [];
-					 for ( const key in parameters ) {
-					 values.push( parameters[ key ] );
-					 }
-					 const geometry = Object.create( this.constructor.prototype );
+				 const parameters = this.parameters;
+				 if ( parameters !== undefined ) {
+				 const values = [];
+				 for ( const key in parameters ) {
+				 values.push( parameters[ key ] );
+				 }
+				 const geometry = Object.create( this.constructor.prototype );
 			 this.constructor.apply( geometry, values );
 			 return geometry;
-					 }
-					 return new this.constructor().copy( this );
+				 }
+				 return new this.constructor().copy( this );
 			 */
 			return new BufferGeometry().copy(this);
 		},
@@ -23346,6 +23346,8 @@ module.exports = anime;
 		}();
 
 		this.addLayer = function (layer) {
+			console.log('addLayer: ', layer);
+
 			if (!window.XRWebGLBinding || !this.layersEnabled || !session) {
 				return;
 			}
@@ -23357,6 +23359,8 @@ module.exports = anime;
 		};
 
 		this.removeLayer = function (layer) {
+			console.log('removeLayer: ', layer);
+
 			if (!window.XRWebGLBinding || !this.layersEnabled || !session) {
 				return;
 			}
@@ -39956,15 +39960,15 @@ module.exports = anime;
 			// TODO: delete this comment?
 			const distanceGeometry = new THREE.IcosahedronBufferGeometry( 1, 2 );
 			const distanceMaterial = new THREE.MeshBasicMaterial( { color: hexColor, fog: false, wireframe: true, opacity: 0.1, transparent: true } );
-				this.lightSphere = new THREE.Mesh( bulbGeometry, bulbMaterial );
+			this.lightSphere = new THREE.Mesh( bulbGeometry, bulbMaterial );
 			this.lightDistance = new THREE.Mesh( distanceGeometry, distanceMaterial );
-				const d = light.distance;
-				if ( d === 0.0 ) {
-					this.lightDistance.visible = false;
-				} else {
-					this.lightDistance.scale.set( d, d, d );
-				}
-				this.add( this.lightDistance );
+			const d = light.distance;
+			if ( d === 0.0 ) {
+				this.lightDistance.visible = false;
+			} else {
+				this.lightDistance.scale.set( d, d, d );
+			}
+			this.add( this.lightDistance );
 			*/
 
 
@@ -39986,12 +39990,12 @@ module.exports = anime;
 			}
 			/*
 			const d = this.light.distance;
-					if ( d === 0.0 ) {
-						this.lightDistance.visible = false;
-					} else {
-						this.lightDistance.visible = true;
+				if ( d === 0.0 ) {
+					this.lightDistance.visible = false;
+				} else {
+					this.lightDistance.visible = true;
 				this.lightDistance.scale.set( d, d, d );
-					}
+				}
 			*/
 
 		};
@@ -40493,7 +40497,7 @@ module.exports = anime;
 			1/___0/|
 			| 6__|_7
 			2/___3/
-					0: max.x, max.y, max.z
+				0: max.x, max.y, max.z
 			1: min.x, max.y, max.z
 			2: min.x, min.y, max.z
 			3: max.x, min.y, max.z
@@ -53647,8 +53651,9 @@ module.exports={
     "object-assign": "^4.0.1",
     "present": "0.0.6",
     "promise-polyfill": "^3.1.0",
+    "registry.npmjs.org": "^1.0.1",
     "super-animejs": "^3.1.0",
-    "super-three": "zakharvoit/three.js#adbce7f87030af0bc57533128cf0236c44ab52d7",
+    "super-three": "zakharvoit/three.js#a205b76da34c318c393d54b2dd92b8d5cf3088ee",
     "three-bmfont-text": "dmarcos/three-bmfont-text#1babdf8507c731a18f8af3b807292e2b9740955e",
     "webvr-polyfill": "^0.10.12"
   },
@@ -67097,6 +67102,7 @@ module.exports.AScene = registerElement('a-scene', {
                   console.log('!!! layersEnabled should be layersEnabled=', vrManager.layersEnabled, ' but forcing it to be false');
                   vrManager.layersEnabled = false;
                   vrManager.setSession(xrSession);
+                  console.log('!!! after setSession call session.baseLayer=', xrSession.target.getBaseLayer());
                   xrSession.addEventListener('end', self.exitVRBound);
                   enterVRSuccess(resolve);
                 },
@@ -69548,7 +69554,7 @@ _dereq_('./core/a-mixin');
 _dereq_('./extras/components/');
 _dereq_('./extras/primitives/');
 
-console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #c720063d)');
+console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #420ca829)');
 console.log('THREE Version (https://github.com/supermedium/three.js):',
             pkg.dependencies['super-three']);
 console.log('WebVR Polyfill Version:', pkg.dependencies['webvr-polyfill']);
