@@ -309,9 +309,9 @@ module.exports.AScene = registerElement('a-scene', {
                   self.xrSession = xrSession;
                   vrManager.layersEnabled = xrInit.requiredFeatures.indexOf('layers') !== -1;
                   console.log('!!! layersEnabled should be layersEnabled=', vrManager.layersEnabled, ' but forcing it to be true');
-                  vrManager.layersEnabled = false;
+                  vrManager.layersEnabled = true;
                   vrManager.setSession(xrSession);
-                  console.log('!!! after setSession call session.baseLayer=', xrSession.target.getBaseLayer());
+                  console.log('!!! after setSession call session.baseLayer=', xrSession.renderState.baseLayer());
                   xrSession.addEventListener('end', self.exitVRBound);
                   enterVRSuccess(resolve);
                 },
