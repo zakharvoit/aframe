@@ -23137,7 +23137,11 @@ module.exports = anime;
 		this.enabled = false;
 		this.isPresenting = false;
 
-		this.getController = function (index) {
+		this.getCameraPose = function () {
+			return pose;
+		};
+
+		this.getController = function (id) {
 			var controller = controllers[index];
 
 			if (controller === undefined) {
@@ -24183,6 +24187,7 @@ module.exports = anime;
 		}
 
 		initGLContext();
+		console.log('Checking navigator.xr: navigator exists=', typeof navigator !== 'undefined', 'xr exists=', 'xr' in navigator);
 		var xr = typeof navigator !== 'undefined' && 'xr' in navigator ? new WebXRManager(_this, _gl) : new WebVRManager(_this);
 		this.xr = xr; // shadow map
 
@@ -53564,7 +53569,7 @@ module.exports={
     "present": "0.0.6",
     "promise-polyfill": "^3.1.0",
     "super-animejs": "^3.1.0",
-    "super-three": "zakharvoit/three.js#dc8018029ab07307d7da26841d21f4fd16759487",
+    "super-three": "zakharvoit/three.js#66aea2a5012c5d65ff81cafa0371f0fce9037e1a",
     "three-bmfont-text": "dmarcos/three-bmfont-text#1babdf8507c731a18f8af3b807292e2b9740955e",
     "webvr-polyfill": "^0.10.12"
   },
@@ -69462,7 +69467,7 @@ _dereq_('./core/a-mixin');
 _dereq_('./extras/components/');
 _dereq_('./extras/primitives/');
 
-console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #5d0b7ae7)');
+console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #2a3a092f)');
 console.log('THREE Version (https://github.com/supermedium/three.js):',
             pkg.dependencies['super-three']);
 console.log('WebVR Polyfill Version:', pkg.dependencies['webvr-polyfill']);
