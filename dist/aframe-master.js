@@ -14623,17 +14623,17 @@ module.exports = anime;
 		clone: function clone() {
 			/*
 			 // Handle primitives
-					 const parameters = this.parameters;
-					 if ( parameters !== undefined ) {
-					 const values = [];
-					 for ( const key in parameters ) {
-					 values.push( parameters[ key ] );
-					 }
-					 const geometry = Object.create( this.constructor.prototype );
+				 const parameters = this.parameters;
+				 if ( parameters !== undefined ) {
+				 const values = [];
+				 for ( const key in parameters ) {
+				 values.push( parameters[ key ] );
+				 }
+				 const geometry = Object.create( this.constructor.prototype );
 			 this.constructor.apply( geometry, values );
 			 return geometry;
-					 }
-					 return new this.constructor().copy( this );
+				 }
+				 return new this.constructor().copy( this );
 			 */
 			return new BufferGeometry().copy(this);
 		},
@@ -39956,15 +39956,15 @@ module.exports = anime;
 			// TODO: delete this comment?
 			const distanceGeometry = new THREE.IcosahedronBufferGeometry( 1, 2 );
 			const distanceMaterial = new THREE.MeshBasicMaterial( { color: hexColor, fog: false, wireframe: true, opacity: 0.1, transparent: true } );
-				this.lightSphere = new THREE.Mesh( bulbGeometry, bulbMaterial );
+			this.lightSphere = new THREE.Mesh( bulbGeometry, bulbMaterial );
 			this.lightDistance = new THREE.Mesh( distanceGeometry, distanceMaterial );
-				const d = light.distance;
-				if ( d === 0.0 ) {
-					this.lightDistance.visible = false;
-				} else {
-					this.lightDistance.scale.set( d, d, d );
-				}
-				this.add( this.lightDistance );
+			const d = light.distance;
+			if ( d === 0.0 ) {
+				this.lightDistance.visible = false;
+			} else {
+				this.lightDistance.scale.set( d, d, d );
+			}
+			this.add( this.lightDistance );
 			*/
 
 
@@ -39986,12 +39986,12 @@ module.exports = anime;
 			}
 			/*
 			const d = this.light.distance;
-					if ( d === 0.0 ) {
-						this.lightDistance.visible = false;
-					} else {
-						this.lightDistance.visible = true;
+				if ( d === 0.0 ) {
+					this.lightDistance.visible = false;
+				} else {
+					this.lightDistance.visible = true;
 				this.lightDistance.scale.set( d, d, d );
-					}
+				}
 			*/
 
 		};
@@ -40493,7 +40493,7 @@ module.exports = anime;
 			1/___0/|
 			| 6__|_7
 			2/___3/
-					0: max.x, max.y, max.z
+				0: max.x, max.y, max.z
 			1: min.x, max.y, max.z
 			2: min.x, min.y, max.z
 			3: max.x, min.y, max.z
@@ -53648,7 +53648,7 @@ module.exports={
     "present": "0.0.6",
     "promise-polyfill": "^3.1.0",
     "super-animejs": "^3.1.0",
-    "super-three": "zakharvoit/three.js#adbce7f87030af0bc57533128cf0236c44ab52d7",
+    "super-three": "zakharvoit/three.js#1ea723bfd64f61476e3ee0e7b44158c95fabde95",
     "three-bmfont-text": "dmarcos/three-bmfont-text#1babdf8507c731a18f8af3b807292e2b9740955e",
     "webvr-polyfill": "^0.10.12"
   },
@@ -69546,7 +69546,7 @@ _dereq_('./core/a-mixin');
 _dereq_('./extras/components/');
 _dereq_('./extras/primitives/');
 
-console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #382ab9df)');
+console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #e501f597)');
 console.log('THREE Version (https://github.com/supermedium/three.js):',
             pkg.dependencies['super-three']);
 console.log('WebVR Polyfill Version:', pkg.dependencies['webvr-polyfill']);
