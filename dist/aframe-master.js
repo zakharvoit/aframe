@@ -12526,6 +12526,324 @@ module.exports = anime;
 		return Triangle;
 	}();
 
+	var materialId = 0;
+
+	function Material() {
+		Object.defineProperty(this, 'id', {
+			value: materialId++
+		});
+		this.uuid = MathUtils.generateUUID();
+		this.name = '';
+		this.type = 'Material';
+		this.fog = true;
+		this.blending = NormalBlending;
+		this.side = FrontSide;
+		this.flatShading = false;
+		this.vertexColors = false;
+		this.opacity = 1;
+		this.transparent = false;
+		this.blendSrc = SrcAlphaFactor;
+		this.blendDst = OneMinusSrcAlphaFactor;
+		this.blendEquation = AddEquation;
+		this.blendSrcAlpha = null;
+		this.blendDstAlpha = null;
+		this.blendEquationAlpha = null;
+		this.depthFunc = LessEqualDepth;
+		this.depthTest = true;
+		this.depthWrite = true;
+		this.stencilWriteMask = 0xff;
+		this.stencilFunc = AlwaysStencilFunc;
+		this.stencilRef = 0;
+		this.stencilFuncMask = 0xff;
+		this.stencilFail = KeepStencilOp;
+		this.stencilZFail = KeepStencilOp;
+		this.stencilZPass = KeepStencilOp;
+		this.stencilWrite = false;
+		this.clippingPlanes = null;
+		this.clipIntersection = false;
+		this.clipShadows = false;
+		this.shadowSide = null;
+		this.colorWrite = true;
+		this.precision = null; // override the renderer's default precision for this material
+
+		this.polygonOffset = false;
+		this.polygonOffsetFactor = 0;
+		this.polygonOffsetUnits = 0;
+		this.dithering = false;
+		this.alphaTest = 0;
+		this.premultipliedAlpha = false;
+		this.visible = true;
+		this.toneMapped = true;
+		this.userData = {};
+		this.version = 0;
+	}
+
+	Material.prototype = Object.assign(Object.create(EventDispatcher.prototype), {
+		constructor: Material,
+		isMaterial: true,
+		onBeforeCompile: function onBeforeCompile()
+		/* shaderobject, renderer */
+		{},
+		customProgramCacheKey: function customProgramCacheKey() {
+			return this.onBeforeCompile.toString();
+		},
+		setValues: function setValues(values) {
+			if (values === undefined) return;
+
+			for (var key in values) {
+				var newValue = values[key];
+
+				if (newValue === undefined) {
+					console.warn('THREE.Material: \'' + key + '\' parameter is undefined.');
+					continue;
+				} // for backward compatability if shading is set in the constructor
+
+
+				if (key === 'shading') {
+					console.warn('THREE.' + this.type + ': .shading has been removed. Use the boolean .flatShading instead.');
+					this.flatShading = newValue === FlatShading ? true : false;
+					continue;
+				}
+
+				var currentValue = this[key];
+
+				if (currentValue === undefined) {
+					console.warn('THREE.' + this.type + ': \'' + key + '\' is not a property of this material.');
+					continue;
+				}
+
+				if (currentValue && currentValue.isColor) {
+					currentValue.set(newValue);
+				} else if (currentValue && currentValue.isVector3 && newValue && newValue.isVector3) {
+					currentValue.copy(newValue);
+				} else {
+					this[key] = newValue;
+				}
+			}
+		},
+		toJSON: function toJSON(meta) {
+			var isRoot = meta === undefined || typeof meta === 'string';
+
+			if (isRoot) {
+				meta = {
+					textures: {},
+					images: {}
+				};
+			}
+
+			var data = {
+				metadata: {
+					version: 4.5,
+					type: 'Material',
+					generator: 'Material.toJSON'
+				}
+			}; // standard Material serialization
+
+			data.uuid = this.uuid;
+			data.type = this.type;
+			if (this.name !== '') data.name = this.name;
+			if (this.color && this.color.isColor) data.color = this.color.getHex();
+			if (this.roughness !== undefined) data.roughness = this.roughness;
+			if (this.metalness !== undefined) data.metalness = this.metalness;
+			if (this.sheen && this.sheen.isColor) data.sheen = this.sheen.getHex();
+			if (this.emissive && this.emissive.isColor) data.emissive = this.emissive.getHex();
+			if (this.emissiveIntensity && this.emissiveIntensity !== 1) data.emissiveIntensity = this.emissiveIntensity;
+			if (this.specular && this.specular.isColor) data.specular = this.specular.getHex();
+			if (this.shininess !== undefined) data.shininess = this.shininess;
+			if (this.clearcoat !== undefined) data.clearcoat = this.clearcoat;
+			if (this.clearcoatRoughness !== undefined) data.clearcoatRoughness = this.clearcoatRoughness;
+
+			if (this.clearcoatMap && this.clearcoatMap.isTexture) {
+				data.clearcoatMap = this.clearcoatMap.toJSON(meta).uuid;
+			}
+
+			if (this.clearcoatRoughnessMap && this.clearcoatRoughnessMap.isTexture) {
+				data.clearcoatRoughnessMap = this.clearcoatRoughnessMap.toJSON(meta).uuid;
+			}
+
+			if (this.clearcoatNormalMap && this.clearcoatNormalMap.isTexture) {
+				data.clearcoatNormalMap = this.clearcoatNormalMap.toJSON(meta).uuid;
+				data.clearcoatNormalScale = this.clearcoatNormalScale.toArray();
+			}
+
+			if (this.map && this.map.isTexture) data.map = this.map.toJSON(meta).uuid;
+			if (this.matcap && this.matcap.isTexture) data.matcap = this.matcap.toJSON(meta).uuid;
+			if (this.alphaMap && this.alphaMap.isTexture) data.alphaMap = this.alphaMap.toJSON(meta).uuid;
+			if (this.lightMap && this.lightMap.isTexture) data.lightMap = this.lightMap.toJSON(meta).uuid;
+
+			if (this.aoMap && this.aoMap.isTexture) {
+				data.aoMap = this.aoMap.toJSON(meta).uuid;
+				data.aoMapIntensity = this.aoMapIntensity;
+			}
+
+			if (this.bumpMap && this.bumpMap.isTexture) {
+				data.bumpMap = this.bumpMap.toJSON(meta).uuid;
+				data.bumpScale = this.bumpScale;
+			}
+
+			if (this.normalMap && this.normalMap.isTexture) {
+				data.normalMap = this.normalMap.toJSON(meta).uuid;
+				data.normalMapType = this.normalMapType;
+				data.normalScale = this.normalScale.toArray();
+			}
+
+			if (this.displacementMap && this.displacementMap.isTexture) {
+				data.displacementMap = this.displacementMap.toJSON(meta).uuid;
+				data.displacementScale = this.displacementScale;
+				data.displacementBias = this.displacementBias;
+			}
+
+			if (this.roughnessMap && this.roughnessMap.isTexture) data.roughnessMap = this.roughnessMap.toJSON(meta).uuid;
+			if (this.metalnessMap && this.metalnessMap.isTexture) data.metalnessMap = this.metalnessMap.toJSON(meta).uuid;
+			if (this.emissiveMap && this.emissiveMap.isTexture) data.emissiveMap = this.emissiveMap.toJSON(meta).uuid;
+			if (this.specularMap && this.specularMap.isTexture) data.specularMap = this.specularMap.toJSON(meta).uuid;
+
+			if (this.envMap && this.envMap.isTexture) {
+				data.envMap = this.envMap.toJSON(meta).uuid;
+				data.reflectivity = this.reflectivity; // Scale behind envMap
+
+				data.refractionRatio = this.refractionRatio;
+				if (this.combine !== undefined) data.combine = this.combine;
+				if (this.envMapIntensity !== undefined) data.envMapIntensity = this.envMapIntensity;
+			}
+
+			if (this.gradientMap && this.gradientMap.isTexture) {
+				data.gradientMap = this.gradientMap.toJSON(meta).uuid;
+			}
+
+			if (this.size !== undefined) data.size = this.size;
+			if (this.sizeAttenuation !== undefined) data.sizeAttenuation = this.sizeAttenuation;
+			if (this.blending !== NormalBlending) data.blending = this.blending;
+			if (this.flatShading === true) data.flatShading = this.flatShading;
+			if (this.side !== FrontSide) data.side = this.side;
+			if (this.vertexColors) data.vertexColors = true;
+			if (this.opacity < 1) data.opacity = this.opacity;
+			if (this.transparent === true) data.transparent = this.transparent;
+			data.depthFunc = this.depthFunc;
+			data.depthTest = this.depthTest;
+			data.depthWrite = this.depthWrite;
+			data.stencilWrite = this.stencilWrite;
+			data.stencilWriteMask = this.stencilWriteMask;
+			data.stencilFunc = this.stencilFunc;
+			data.stencilRef = this.stencilRef;
+			data.stencilFuncMask = this.stencilFuncMask;
+			data.stencilFail = this.stencilFail;
+			data.stencilZFail = this.stencilZFail;
+			data.stencilZPass = this.stencilZPass; // rotation (SpriteMaterial)
+
+			if (this.rotation && this.rotation !== 0) data.rotation = this.rotation;
+			if (this.polygonOffset === true) data.polygonOffset = true;
+			if (this.polygonOffsetFactor !== 0) data.polygonOffsetFactor = this.polygonOffsetFactor;
+			if (this.polygonOffsetUnits !== 0) data.polygonOffsetUnits = this.polygonOffsetUnits;
+			if (this.linewidth && this.linewidth !== 1) data.linewidth = this.linewidth;
+			if (this.dashSize !== undefined) data.dashSize = this.dashSize;
+			if (this.gapSize !== undefined) data.gapSize = this.gapSize;
+			if (this.scale !== undefined) data.scale = this.scale;
+			if (this.dithering === true) data.dithering = true;
+			if (this.alphaTest > 0) data.alphaTest = this.alphaTest;
+			if (this.premultipliedAlpha === true) data.premultipliedAlpha = this.premultipliedAlpha;
+			if (this.wireframe === true) data.wireframe = this.wireframe;
+			if (this.wireframeLinewidth > 1) data.wireframeLinewidth = this.wireframeLinewidth;
+			if (this.wireframeLinecap !== 'round') data.wireframeLinecap = this.wireframeLinecap;
+			if (this.wireframeLinejoin !== 'round') data.wireframeLinejoin = this.wireframeLinejoin;
+			if (this.morphTargets === true) data.morphTargets = true;
+			if (this.morphNormals === true) data.morphNormals = true;
+			if (this.skinning === true) data.skinning = true;
+			if (this.visible === false) data.visible = false;
+			if (this.toneMapped === false) data.toneMapped = false;
+			if (JSON.stringify(this.userData) !== '{}') data.userData = this.userData; // TODO: Copied from Object3D.toJSON
+
+			function extractFromCache(cache) {
+				var values = [];
+
+				for (var key in cache) {
+					var _data = cache[key];
+					delete _data.metadata;
+					values.push(_data);
+				}
+
+				return values;
+			}
+
+			if (isRoot) {
+				var textures = extractFromCache(meta.textures);
+				var images = extractFromCache(meta.images);
+				if (textures.length > 0) data.textures = textures;
+				if (images.length > 0) data.images = images;
+			}
+
+			return data;
+		},
+		clone: function clone() {
+			return new this.constructor().copy(this);
+		},
+		copy: function copy(source) {
+			this.name = source.name;
+			this.fog = source.fog;
+			this.blending = source.blending;
+			this.side = source.side;
+			this.flatShading = source.flatShading;
+			this.vertexColors = source.vertexColors;
+			this.opacity = source.opacity;
+			this.transparent = source.transparent;
+			this.blendSrc = source.blendSrc;
+			this.blendDst = source.blendDst;
+			this.blendEquation = source.blendEquation;
+			this.blendSrcAlpha = source.blendSrcAlpha;
+			this.blendDstAlpha = source.blendDstAlpha;
+			this.blendEquationAlpha = source.blendEquationAlpha;
+			this.depthFunc = source.depthFunc;
+			this.depthTest = source.depthTest;
+			this.depthWrite = source.depthWrite;
+			this.stencilWriteMask = source.stencilWriteMask;
+			this.stencilFunc = source.stencilFunc;
+			this.stencilRef = source.stencilRef;
+			this.stencilFuncMask = source.stencilFuncMask;
+			this.stencilFail = source.stencilFail;
+			this.stencilZFail = source.stencilZFail;
+			this.stencilZPass = source.stencilZPass;
+			this.stencilWrite = source.stencilWrite;
+			var srcPlanes = source.clippingPlanes;
+			var dstPlanes = null;
+
+			if (srcPlanes !== null) {
+				var n = srcPlanes.length;
+				dstPlanes = new Array(n);
+
+				for (var i = 0; i !== n; ++i) {
+					dstPlanes[i] = srcPlanes[i].clone();
+				}
+			}
+
+			this.clippingPlanes = dstPlanes;
+			this.clipIntersection = source.clipIntersection;
+			this.clipShadows = source.clipShadows;
+			this.shadowSide = source.shadowSide;
+			this.colorWrite = source.colorWrite;
+			this.precision = source.precision;
+			this.polygonOffset = source.polygonOffset;
+			this.polygonOffsetFactor = source.polygonOffsetFactor;
+			this.polygonOffsetUnits = source.polygonOffsetUnits;
+			this.dithering = source.dithering;
+			this.alphaTest = source.alphaTest;
+			this.premultipliedAlpha = source.premultipliedAlpha;
+			this.visible = source.visible;
+			this.toneMapped = source.toneMapped;
+			this.userData = JSON.parse(JSON.stringify(source.userData));
+			return this;
+		},
+		dispose: function dispose() {
+			this.dispatchEvent({
+				type: 'dispose'
+			});
+		}
+	});
+	Object.defineProperty(Material.prototype, 'needsUpdate', {
+		set: function set(value) {
+			if (value === true) this.version++;
+		}
+	});
+
 	var _colorKeywords = {
 		'aliceblue': 0xF0F8FF,
 		'antiquewhite': 0xFAEBD7,
@@ -13128,368 +13446,6 @@ module.exports = anime;
 	Color.prototype.r = 1;
 	Color.prototype.g = 1;
 	Color.prototype.b = 1;
-
-	var Face3 = /*#__PURE__*/function () {
-		function Face3(a, b, c, normal, color, materialIndex) {
-			if (materialIndex === void 0) {
-				materialIndex = 0;
-			}
-
-			this.a = a;
-			this.b = b;
-			this.c = c;
-			this.normal = normal && normal.isVector3 ? normal : new Vector3();
-			this.vertexNormals = Array.isArray(normal) ? normal : [];
-			this.color = color && color.isColor ? color : new Color();
-			this.vertexColors = Array.isArray(color) ? color : [];
-			this.materialIndex = materialIndex;
-		}
-
-		var _proto = Face3.prototype;
-
-		_proto.clone = function clone() {
-			return new this.constructor().copy(this);
-		};
-
-		_proto.copy = function copy(source) {
-			this.a = source.a;
-			this.b = source.b;
-			this.c = source.c;
-			this.normal.copy(source.normal);
-			this.color.copy(source.color);
-			this.materialIndex = source.materialIndex;
-
-			for (var i = 0, il = source.vertexNormals.length; i < il; i++) {
-				this.vertexNormals[i] = source.vertexNormals[i].clone();
-			}
-
-			for (var _i = 0, _il = source.vertexColors.length; _i < _il; _i++) {
-				this.vertexColors[_i] = source.vertexColors[_i].clone();
-			}
-
-			return this;
-		};
-
-		return Face3;
-	}();
-
-	var materialId = 0;
-
-	function Material() {
-		Object.defineProperty(this, 'id', {
-			value: materialId++
-		});
-		this.uuid = MathUtils.generateUUID();
-		this.name = '';
-		this.type = 'Material';
-		this.fog = true;
-		this.blending = NormalBlending;
-		this.side = FrontSide;
-		this.flatShading = false;
-		this.vertexColors = false;
-		this.opacity = 1;
-		this.transparent = false;
-		this.blendSrc = SrcAlphaFactor;
-		this.blendDst = OneMinusSrcAlphaFactor;
-		this.blendEquation = AddEquation;
-		this.blendSrcAlpha = null;
-		this.blendDstAlpha = null;
-		this.blendEquationAlpha = null;
-		this.depthFunc = LessEqualDepth;
-		this.depthTest = true;
-		this.depthWrite = true;
-		this.stencilWriteMask = 0xff;
-		this.stencilFunc = AlwaysStencilFunc;
-		this.stencilRef = 0;
-		this.stencilFuncMask = 0xff;
-		this.stencilFail = KeepStencilOp;
-		this.stencilZFail = KeepStencilOp;
-		this.stencilZPass = KeepStencilOp;
-		this.stencilWrite = false;
-		this.clippingPlanes = null;
-		this.clipIntersection = false;
-		this.clipShadows = false;
-		this.shadowSide = null;
-		this.colorWrite = true;
-		this.precision = null; // override the renderer's default precision for this material
-
-		this.polygonOffset = false;
-		this.polygonOffsetFactor = 0;
-		this.polygonOffsetUnits = 0;
-		this.dithering = false;
-		this.alphaTest = 0;
-		this.premultipliedAlpha = false;
-		this.visible = true;
-		this.toneMapped = true;
-		this.userData = {};
-		this.version = 0;
-	}
-
-	Material.prototype = Object.assign(Object.create(EventDispatcher.prototype), {
-		constructor: Material,
-		isMaterial: true,
-		onBeforeCompile: function onBeforeCompile()
-		/* shaderobject, renderer */
-		{},
-		customProgramCacheKey: function customProgramCacheKey() {
-			return this.onBeforeCompile.toString();
-		},
-		setValues: function setValues(values) {
-			if (values === undefined) return;
-
-			for (var key in values) {
-				var newValue = values[key];
-
-				if (newValue === undefined) {
-					console.warn('THREE.Material: \'' + key + '\' parameter is undefined.');
-					continue;
-				} // for backward compatability if shading is set in the constructor
-
-
-				if (key === 'shading') {
-					console.warn('THREE.' + this.type + ': .shading has been removed. Use the boolean .flatShading instead.');
-					this.flatShading = newValue === FlatShading ? true : false;
-					continue;
-				}
-
-				var currentValue = this[key];
-
-				if (currentValue === undefined) {
-					console.warn('THREE.' + this.type + ': \'' + key + '\' is not a property of this material.');
-					continue;
-				}
-
-				if (currentValue && currentValue.isColor) {
-					currentValue.set(newValue);
-				} else if (currentValue && currentValue.isVector3 && newValue && newValue.isVector3) {
-					currentValue.copy(newValue);
-				} else {
-					this[key] = newValue;
-				}
-			}
-		},
-		toJSON: function toJSON(meta) {
-			var isRoot = meta === undefined || typeof meta === 'string';
-
-			if (isRoot) {
-				meta = {
-					textures: {},
-					images: {}
-				};
-			}
-
-			var data = {
-				metadata: {
-					version: 4.5,
-					type: 'Material',
-					generator: 'Material.toJSON'
-				}
-			}; // standard Material serialization
-
-			data.uuid = this.uuid;
-			data.type = this.type;
-			if (this.name !== '') data.name = this.name;
-			if (this.color && this.color.isColor) data.color = this.color.getHex();
-			if (this.roughness !== undefined) data.roughness = this.roughness;
-			if (this.metalness !== undefined) data.metalness = this.metalness;
-			if (this.sheen && this.sheen.isColor) data.sheen = this.sheen.getHex();
-			if (this.emissive && this.emissive.isColor) data.emissive = this.emissive.getHex();
-			if (this.emissiveIntensity && this.emissiveIntensity !== 1) data.emissiveIntensity = this.emissiveIntensity;
-			if (this.specular && this.specular.isColor) data.specular = this.specular.getHex();
-			if (this.shininess !== undefined) data.shininess = this.shininess;
-			if (this.clearcoat !== undefined) data.clearcoat = this.clearcoat;
-			if (this.clearcoatRoughness !== undefined) data.clearcoatRoughness = this.clearcoatRoughness;
-
-			if (this.clearcoatMap && this.clearcoatMap.isTexture) {
-				data.clearcoatMap = this.clearcoatMap.toJSON(meta).uuid;
-			}
-
-			if (this.clearcoatRoughnessMap && this.clearcoatRoughnessMap.isTexture) {
-				data.clearcoatRoughnessMap = this.clearcoatRoughnessMap.toJSON(meta).uuid;
-			}
-
-			if (this.clearcoatNormalMap && this.clearcoatNormalMap.isTexture) {
-				data.clearcoatNormalMap = this.clearcoatNormalMap.toJSON(meta).uuid;
-				data.clearcoatNormalScale = this.clearcoatNormalScale.toArray();
-			}
-
-			if (this.map && this.map.isTexture) data.map = this.map.toJSON(meta).uuid;
-			if (this.matcap && this.matcap.isTexture) data.matcap = this.matcap.toJSON(meta).uuid;
-			if (this.alphaMap && this.alphaMap.isTexture) data.alphaMap = this.alphaMap.toJSON(meta).uuid;
-			if (this.lightMap && this.lightMap.isTexture) data.lightMap = this.lightMap.toJSON(meta).uuid;
-
-			if (this.aoMap && this.aoMap.isTexture) {
-				data.aoMap = this.aoMap.toJSON(meta).uuid;
-				data.aoMapIntensity = this.aoMapIntensity;
-			}
-
-			if (this.bumpMap && this.bumpMap.isTexture) {
-				data.bumpMap = this.bumpMap.toJSON(meta).uuid;
-				data.bumpScale = this.bumpScale;
-			}
-
-			if (this.normalMap && this.normalMap.isTexture) {
-				data.normalMap = this.normalMap.toJSON(meta).uuid;
-				data.normalMapType = this.normalMapType;
-				data.normalScale = this.normalScale.toArray();
-			}
-
-			if (this.displacementMap && this.displacementMap.isTexture) {
-				data.displacementMap = this.displacementMap.toJSON(meta).uuid;
-				data.displacementScale = this.displacementScale;
-				data.displacementBias = this.displacementBias;
-			}
-
-			if (this.roughnessMap && this.roughnessMap.isTexture) data.roughnessMap = this.roughnessMap.toJSON(meta).uuid;
-			if (this.metalnessMap && this.metalnessMap.isTexture) data.metalnessMap = this.metalnessMap.toJSON(meta).uuid;
-			if (this.emissiveMap && this.emissiveMap.isTexture) data.emissiveMap = this.emissiveMap.toJSON(meta).uuid;
-			if (this.specularMap && this.specularMap.isTexture) data.specularMap = this.specularMap.toJSON(meta).uuid;
-
-			if (this.envMap && this.envMap.isTexture) {
-				data.envMap = this.envMap.toJSON(meta).uuid;
-				data.reflectivity = this.reflectivity; // Scale behind envMap
-
-				data.refractionRatio = this.refractionRatio;
-				if (this.combine !== undefined) data.combine = this.combine;
-				if (this.envMapIntensity !== undefined) data.envMapIntensity = this.envMapIntensity;
-			}
-
-			if (this.gradientMap && this.gradientMap.isTexture) {
-				data.gradientMap = this.gradientMap.toJSON(meta).uuid;
-			}
-
-			if (this.size !== undefined) data.size = this.size;
-			if (this.sizeAttenuation !== undefined) data.sizeAttenuation = this.sizeAttenuation;
-			if (this.blending !== NormalBlending) data.blending = this.blending;
-			if (this.flatShading === true) data.flatShading = this.flatShading;
-			if (this.side !== FrontSide) data.side = this.side;
-			if (this.vertexColors) data.vertexColors = true;
-			if (this.opacity < 1) data.opacity = this.opacity;
-			if (this.transparent === true) data.transparent = this.transparent;
-			data.depthFunc = this.depthFunc;
-			data.depthTest = this.depthTest;
-			data.depthWrite = this.depthWrite;
-			data.stencilWrite = this.stencilWrite;
-			data.stencilWriteMask = this.stencilWriteMask;
-			data.stencilFunc = this.stencilFunc;
-			data.stencilRef = this.stencilRef;
-			data.stencilFuncMask = this.stencilFuncMask;
-			data.stencilFail = this.stencilFail;
-			data.stencilZFail = this.stencilZFail;
-			data.stencilZPass = this.stencilZPass; // rotation (SpriteMaterial)
-
-			if (this.rotation && this.rotation !== 0) data.rotation = this.rotation;
-			if (this.polygonOffset === true) data.polygonOffset = true;
-			if (this.polygonOffsetFactor !== 0) data.polygonOffsetFactor = this.polygonOffsetFactor;
-			if (this.polygonOffsetUnits !== 0) data.polygonOffsetUnits = this.polygonOffsetUnits;
-			if (this.linewidth && this.linewidth !== 1) data.linewidth = this.linewidth;
-			if (this.dashSize !== undefined) data.dashSize = this.dashSize;
-			if (this.gapSize !== undefined) data.gapSize = this.gapSize;
-			if (this.scale !== undefined) data.scale = this.scale;
-			if (this.dithering === true) data.dithering = true;
-			if (this.alphaTest > 0) data.alphaTest = this.alphaTest;
-			if (this.premultipliedAlpha === true) data.premultipliedAlpha = this.premultipliedAlpha;
-			if (this.wireframe === true) data.wireframe = this.wireframe;
-			if (this.wireframeLinewidth > 1) data.wireframeLinewidth = this.wireframeLinewidth;
-			if (this.wireframeLinecap !== 'round') data.wireframeLinecap = this.wireframeLinecap;
-			if (this.wireframeLinejoin !== 'round') data.wireframeLinejoin = this.wireframeLinejoin;
-			if (this.morphTargets === true) data.morphTargets = true;
-			if (this.morphNormals === true) data.morphNormals = true;
-			if (this.skinning === true) data.skinning = true;
-			if (this.visible === false) data.visible = false;
-			if (this.toneMapped === false) data.toneMapped = false;
-			if (JSON.stringify(this.userData) !== '{}') data.userData = this.userData; // TODO: Copied from Object3D.toJSON
-
-			function extractFromCache(cache) {
-				var values = [];
-
-				for (var key in cache) {
-					var _data = cache[key];
-					delete _data.metadata;
-					values.push(_data);
-				}
-
-				return values;
-			}
-
-			if (isRoot) {
-				var textures = extractFromCache(meta.textures);
-				var images = extractFromCache(meta.images);
-				if (textures.length > 0) data.textures = textures;
-				if (images.length > 0) data.images = images;
-			}
-
-			return data;
-		},
-		clone: function clone() {
-			return new this.constructor().copy(this);
-		},
-		copy: function copy(source) {
-			this.name = source.name;
-			this.fog = source.fog;
-			this.blending = source.blending;
-			this.side = source.side;
-			this.flatShading = source.flatShading;
-			this.vertexColors = source.vertexColors;
-			this.opacity = source.opacity;
-			this.transparent = source.transparent;
-			this.blendSrc = source.blendSrc;
-			this.blendDst = source.blendDst;
-			this.blendEquation = source.blendEquation;
-			this.blendSrcAlpha = source.blendSrcAlpha;
-			this.blendDstAlpha = source.blendDstAlpha;
-			this.blendEquationAlpha = source.blendEquationAlpha;
-			this.depthFunc = source.depthFunc;
-			this.depthTest = source.depthTest;
-			this.depthWrite = source.depthWrite;
-			this.stencilWriteMask = source.stencilWriteMask;
-			this.stencilFunc = source.stencilFunc;
-			this.stencilRef = source.stencilRef;
-			this.stencilFuncMask = source.stencilFuncMask;
-			this.stencilFail = source.stencilFail;
-			this.stencilZFail = source.stencilZFail;
-			this.stencilZPass = source.stencilZPass;
-			this.stencilWrite = source.stencilWrite;
-			var srcPlanes = source.clippingPlanes;
-			var dstPlanes = null;
-
-			if (srcPlanes !== null) {
-				var n = srcPlanes.length;
-				dstPlanes = new Array(n);
-
-				for (var i = 0; i !== n; ++i) {
-					dstPlanes[i] = srcPlanes[i].clone();
-				}
-			}
-
-			this.clippingPlanes = dstPlanes;
-			this.clipIntersection = source.clipIntersection;
-			this.clipShadows = source.clipShadows;
-			this.shadowSide = source.shadowSide;
-			this.colorWrite = source.colorWrite;
-			this.precision = source.precision;
-			this.polygonOffset = source.polygonOffset;
-			this.polygonOffsetFactor = source.polygonOffsetFactor;
-			this.polygonOffsetUnits = source.polygonOffsetUnits;
-			this.dithering = source.dithering;
-			this.alphaTest = source.alphaTest;
-			this.premultipliedAlpha = source.premultipliedAlpha;
-			this.visible = source.visible;
-			this.toneMapped = source.toneMapped;
-			this.userData = JSON.parse(JSON.stringify(source.userData));
-			return this;
-		},
-		dispose: function dispose() {
-			this.dispatchEvent({
-				type: 'dispose'
-			});
-		}
-	});
-	Object.defineProperty(Material.prototype, 'needsUpdate', {
-		set: function set(value) {
-			if (value === true) this.version++;
-		}
-	});
 
 	/**
 	 * parameters = {
@@ -15049,7 +15005,13 @@ module.exports = anime;
 				intersection.uv2 = Triangle.getUV(_intersectionPoint, _vA, _vB, _vC, _uvA, _uvB, _uvC, new Vector2());
 			}
 
-			var face = new Face3(a, b, c);
+			var face = {
+				a: a,
+				b: a,
+				c: c,
+				normal: new Vector3(),
+				materialIndex: 0
+			};
 			Triangle.getNormal(_vA, _vB, _vC, face.normal);
 			intersection.face = face;
 		}
@@ -22594,16 +22556,6 @@ module.exports = anime;
 		};
 	}
 
-	function Group() {
-		Object3D.call(this);
-		this.type = 'Group';
-	}
-
-	Group.prototype = Object.assign(Object.create(Object3D.prototype), {
-		constructor: Group,
-		isGroup: true
-	});
-
 	function ArrayCamera(array) {
 		if (array === void 0) {
 			array = [];
@@ -22618,362 +22570,15 @@ module.exports = anime;
 		isArrayCamera: true
 	});
 
-	/**
-	 * @author jsantell / https://www.jsantell.com/
-	 * @author mrdoob / http://mrdoob.com/
-	 */
-	var cameraLPos = new Vector3();
-	var cameraRPos = new Vector3();
-	/**
-	 * Assumes 2 cameras that are parallel and share an X-axis, and that
-	 * the cameras' projection and world matrices have already been set.
-	 * And that near and far planes are identical for both cameras.
-	 * Visualization of this technique: https://computergraphics.stackexchange.com/a/4765
-	 */
-
-	function setProjectionFromUnion(camera, cameraL, cameraR) {
-		cameraLPos.setFromMatrixPosition(cameraL.matrixWorld);
-		cameraRPos.setFromMatrixPosition(cameraR.matrixWorld);
-		var ipd = cameraLPos.distanceTo(cameraRPos);
-		var projL = cameraL.projectionMatrix.elements;
-		var projR = cameraR.projectionMatrix.elements; // VR systems will have identical far and near planes, and
-		// most likely identical top and bottom frustum extents.
-		// Use the left camera for these values.
-
-		var near = projL[14] / (projL[10] - 1);
-		var far = projL[14] / (projL[10] + 1);
-		var topFov = (projL[9] + 1) / projL[5];
-		var bottomFov = (projL[9] - 1) / projL[5];
-		var leftFov = (projL[8] - 1) / projL[0];
-		var rightFov = (projR[8] + 1) / projR[0];
-		var left = near * leftFov;
-		var right = near * rightFov; // Calculate the new camera's position offset from the
-		// left camera. xOffset should be roughly half `ipd`.
-
-		var zOffset = ipd / (-leftFov + rightFov);
-		var xOffset = zOffset * -leftFov; // TODO: Better way to apply this offset?
-
-		cameraL.matrixWorld.decompose(camera.position, camera.quaternion, camera.scale);
-		camera.translateX(xOffset);
-		camera.translateZ(zOffset);
-		camera.matrixWorld.compose(camera.position, camera.quaternion, camera.scale);
-		camera.matrixWorldInverse.getInverse(camera.matrixWorld); // Find the union of the frustum values of the cameras and scale
-		// the values so that the near plane's position does not change in world space,
-		// although must now be relative to the new union camera.
-
-		var near2 = near + zOffset;
-		var far2 = far + zOffset;
-		var left2 = left - xOffset;
-		var right2 = right + (ipd - xOffset);
-		var top2 = topFov * far / far2 * near2;
-		var bottom2 = bottomFov * far / far2 * near2;
-		camera.projectionMatrix.makePerspective(left2, right2, top2, bottom2, near2, far2);
+	function Group() {
+		Object3D.call(this);
+		this.type = 'Group';
 	}
 
-	/**
-	 * @author mrdoob / http://mrdoob.com/
-	 */
-
-	function WebVRManager(renderer) {
-		var renderWidth, renderHeight;
-		var scope = this;
-		var device = null;
-		var frameData = null;
-		var poseTarget = null;
-		var controllers = [];
-		var standingMatrix = new Matrix4();
-		var standingMatrixInverse = new Matrix4();
-		var framebufferScaleFactor = 1.0;
-		var referenceSpaceType = 'local-floor';
-
-		if (typeof window !== 'undefined' && 'VRFrameData' in window) {
-			frameData = new window.VRFrameData();
-			window.addEventListener('vrdisplaypresentchange', onVRDisplayPresentChange, false);
-		}
-
-		var matrixWorldInverse = new Matrix4();
-		var tempQuaternion = new Quaternion();
-		var tempPosition = new Vector3();
-		var cameraL = new PerspectiveCamera();
-		cameraL.viewport = new Vector4();
-		cameraL.layers.enable(1);
-		var cameraR = new PerspectiveCamera();
-		cameraR.viewport = new Vector4();
-		cameraR.layers.enable(2);
-		var cameraVR = new ArrayCamera([cameraL, cameraR]);
-		cameraVR.layers.enable(1);
-		cameraVR.layers.enable(2);
-		var currentSize = new Vector2(),
-				currentPixelRatio;
-
-		function onVRDisplayPresentChange() {
-			var isPresenting = scope.isPresenting = device !== null && device.isPresenting === true;
-
-			if (isPresenting) {
-				var eyeParameters = device.getEyeParameters('left');
-				renderWidth = 2 * eyeParameters.renderWidth * framebufferScaleFactor;
-				renderHeight = eyeParameters.renderHeight * framebufferScaleFactor;
-				currentPixelRatio = renderer.getPixelRatio();
-				renderer.getSize(currentSize);
-				renderer.setDrawingBufferSize(renderWidth, renderHeight, 1);
-				cameraL.viewport.set(0, 0, renderWidth / 2, renderHeight);
-				cameraR.viewport.set(renderWidth / 2, 0, renderWidth / 2, renderHeight);
-				animation.start();
-				scope.dispatchEvent({
-					type: 'sessionstart'
-				});
-			} else {
-				if (scope.enabled) {
-					renderer.setDrawingBufferSize(currentSize.width, currentSize.height, currentPixelRatio);
-				}
-
-				animation.stop();
-				scope.dispatchEvent({
-					type: 'sessionend'
-				});
-			}
-		} //
-
-
-		var triggers = [];
-		var grips = [];
-
-		function findGamepad(id) {
-			var gamepads = navigator.getGamepads && navigator.getGamepads();
-
-			for (var i = 0, l = gamepads.length; i < l; i++) {
-				var gamepad = gamepads[i];
-
-				if (gamepad && (gamepad.id === 'Daydream Controller' || gamepad.id === 'Gear VR Controller' || gamepad.id === 'Oculus Go Controller' || gamepad.id === 'OpenVR Gamepad' || gamepad.id.startsWith('Oculus Touch') || gamepad.id.startsWith('HTC Vive Focus') || gamepad.id.startsWith('Spatial Controller'))) {
-					var hand = gamepad.hand;
-					if (id === 0 && (hand === '' || hand === 'right')) return gamepad;
-					if (id === 1 && hand === 'left') return gamepad;
-				}
-			}
-		}
-
-		function updateControllers() {
-			for (var i = 0; i < controllers.length; i++) {
-				var controller = controllers[i];
-				var gamepad = findGamepad(i);
-
-				if (gamepad !== undefined && gamepad.pose !== undefined) {
-					if (gamepad.pose === null) return; // Pose
-
-					var pose = gamepad.pose;
-					if (pose.hasPosition === false) controller.position.set(0.2, -0.6, -0.05);
-					if (pose.position !== null) controller.position.fromArray(pose.position);
-					if (pose.orientation !== null) controller.quaternion.fromArray(pose.orientation);
-					controller.matrix.compose(controller.position, controller.quaternion, controller.scale);
-					controller.matrix.premultiply(standingMatrix);
-					controller.matrix.decompose(controller.position, controller.quaternion, controller.scale);
-					controller.matrixWorldNeedsUpdate = true;
-					controller.visible = true; // Trigger
-
-					var buttonId = gamepad.id === 'Daydream Controller' ? 0 : 1;
-					if (triggers[i] === undefined) triggers[i] = false;
-
-					if (triggers[i] !== gamepad.buttons[buttonId].pressed) {
-						triggers[i] = gamepad.buttons[buttonId].pressed;
-
-						if (triggers[i] === true) {
-							controller.dispatchEvent({
-								type: 'selectstart'
-							});
-						} else {
-							controller.dispatchEvent({
-								type: 'selectend'
-							});
-							controller.dispatchEvent({
-								type: 'select'
-							});
-						}
-					} // Grip
-
-
-					buttonId = 2;
-					if (grips[i] === undefined) grips[i] = false; // Skip if the grip button doesn't exist on this controller
-
-					if (gamepad.buttons[buttonId] !== undefined) {
-						if (grips[i] !== gamepad.buttons[buttonId].pressed) {
-							grips[i] = gamepad.buttons[buttonId].pressed;
-
-							if (grips[i] === true) {
-								controller.dispatchEvent({
-									type: 'squeezestart'
-								});
-							} else {
-								controller.dispatchEvent({
-									type: 'squeezeend'
-								});
-								controller.dispatchEvent({
-									type: 'squeeze'
-								});
-							}
-						}
-					}
-				} else {
-					controller.visible = false;
-				}
-			}
-		}
-
-		function updateViewportFromBounds(viewport, bounds) {
-			if (bounds !== null && bounds.length === 4) {
-				viewport.set(bounds[0] * renderWidth, bounds[1] * renderHeight, bounds[2] * renderWidth, bounds[3] * renderHeight);
-			}
-		} //
-
-
-		this.enabled = false;
-
-		this.getController = function (id) {
-			var controller = controllers[id];
-
-			if (controller === undefined) {
-				controller = new Group();
-				controller.matrixAutoUpdate = false;
-				controller.visible = false;
-				controllers[id] = controller;
-			}
-
-			return controller;
-		};
-
-		this.getDevice = function () {
-			return device;
-		};
-
-		this.setDevice = function (value) {
-			if (value !== undefined) device = value;
-			animation.setContext(value);
-		};
-
-		this.setFramebufferScaleFactor = function (value) {
-			framebufferScaleFactor = value;
-		};
-
-		this.setReferenceSpaceType = function (value) {
-			referenceSpaceType = value;
-		};
-
-		this.setPoseTarget = function (object) {
-			if (object !== undefined) poseTarget = object;
-		};
-
-		this.getCamera = function (camera) {
-			var userHeight = referenceSpaceType === 'local-floor' ? 1.6 : 0;
-			device.depthNear = camera.near;
-			device.depthFar = camera.far;
-			device.getFrameData(frameData); //
-
-			if (referenceSpaceType === 'local-floor') {
-				var stageParameters = device.stageParameters;
-
-				if (stageParameters) {
-					standingMatrix.fromArray(stageParameters.sittingToStandingTransform);
-				} else {
-					standingMatrix.makeTranslation(0, userHeight, 0);
-				}
-			}
-
-			var pose = frameData.pose;
-			var poseObject = poseTarget !== null ? poseTarget : camera; // We want to manipulate poseObject by its position and quaternion components since users may rely on them.
-
-			poseObject.matrix.copy(standingMatrix);
-			poseObject.matrix.decompose(poseObject.position, poseObject.quaternion, poseObject.scale);
-
-			if (pose.orientation !== null) {
-				tempQuaternion.fromArray(pose.orientation);
-				poseObject.quaternion.multiply(tempQuaternion);
-			}
-
-			if (pose.position !== null) {
-				tempQuaternion.setFromRotationMatrix(standingMatrix);
-				tempPosition.fromArray(pose.position);
-				tempPosition.applyQuaternion(tempQuaternion);
-				poseObject.position.add(tempPosition);
-			}
-
-			poseObject.updateMatrixWorld();
-			var children = poseObject.children;
-
-			for (var i = 0, l = children.length; i < l; i++) {
-				children[i].updateMatrixWorld(true);
-			} //
-
-
-			cameraL.near = camera.near;
-			cameraR.near = camera.near;
-			cameraL.far = camera.far;
-			cameraR.far = camera.far;
-			cameraL.matrixWorldInverse.fromArray(frameData.leftViewMatrix);
-			cameraR.matrixWorldInverse.fromArray(frameData.rightViewMatrix); // TODO (mrdoob) Double check this code
-
-			standingMatrixInverse.getInverse(standingMatrix);
-
-			if (referenceSpaceType === 'local-floor') {
-				cameraL.matrixWorldInverse.multiply(standingMatrixInverse);
-				cameraR.matrixWorldInverse.multiply(standingMatrixInverse);
-			}
-
-			var parent = poseObject.parent;
-
-			if (parent !== null) {
-				matrixWorldInverse.getInverse(parent.matrixWorld);
-				cameraL.matrixWorldInverse.multiply(matrixWorldInverse);
-				cameraR.matrixWorldInverse.multiply(matrixWorldInverse);
-			} // envMap and Mirror needs camera.matrixWorld
-
-
-			cameraL.matrixWorld.getInverse(cameraL.matrixWorldInverse);
-			cameraR.matrixWorld.getInverse(cameraR.matrixWorldInverse);
-			cameraL.projectionMatrix.fromArray(frameData.leftProjectionMatrix);
-			cameraR.projectionMatrix.fromArray(frameData.rightProjectionMatrix);
-			setProjectionFromUnion(cameraVR, cameraL, cameraR); //
-
-			var layers = device.getLayers();
-
-			if (layers.length) {
-				var layer = layers[0];
-				updateViewportFromBounds(cameraL.viewport, layer.leftBounds);
-				updateViewportFromBounds(cameraR.viewport, layer.rightBounds);
-			}
-
-			updateControllers();
-			return cameraVR;
-		};
-
-		this.getStandingMatrix = function () {
-			return standingMatrix;
-		};
-
-		this.isPresenting = false; // Animation Loop
-
-		var animation = new WebGLAnimation();
-
-		this.setAnimationLoop = function (callback) {
-			animation.setAnimationLoop(callback);
-			if (this.isPresenting) animation.start();
-		};
-
-		this.submitFrame = function () {
-			if (this.isPresenting) device.submitFrame();
-		};
-
-		this.dispose = function () {
-			if (typeof window !== 'undefined') {
-				window.removeEventListener('vrdisplaypresentchange', onVRDisplayPresentChange);
-			}
-		}; // DEPRECATED
-
-
-		this.setFrameOfReferenceType = function () {
-			console.warn('THREE.WebVRManager: setFrameOfReferenceType() has been deprecated.');
-		};
-	}
-
-	Object.assign(WebVRManager.prototype, EventDispatcher.prototype);
+	Group.prototype = Object.assign(Object.create(Object3D.prototype), {
+		constructor: Group,
+		isGroup: true
+	});
 
 	function WebXRController() {
 		this._targetRay = null;
@@ -23155,11 +22760,8 @@ module.exports = anime;
 		var referenceSpace = null;
 		var referenceSpaceType = 'local-floor';
 		var pose = null;
-		var poseTarget = null;
 		var controllers = [];
-		var inputSourcesMap = new Map();
-		var layers = [];
-		var baseLayer; //
+		var inputSourcesMap = new Map(); //
 
 		var cameraL = new PerspectiveCamera();
 		cameraL.layers.enable(1);
@@ -23174,13 +22776,8 @@ module.exports = anime;
 		var _currentDepthNear = null;
 		var _currentDepthFar = null; //
 
-		this.layersEnabled = false;
 		this.enabled = false;
 		this.isPresenting = false;
-
-		this.getCameraPose = function () {
-			return pose;
-		};
 
 		this.getController = function (index) {
 			var controller = controllers[index];
@@ -23271,7 +22868,7 @@ module.exports = anime;
 
 		this.setSession = /*#__PURE__*/function () {
 			var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(value) {
-				var attributes, layerInit;
+				var attributes, layerInit, baseLayer;
 				return regeneratorRuntime.wrap(function _callee$(_context) {
 					while (1) {
 						switch (_context.prev = _context.next) {
@@ -23311,15 +22908,9 @@ module.exports = anime;
 								}; // eslint-disable-next-line no-undef
 
 								baseLayer = new XRWebGLLayer(session, gl, layerInit);
-
-								if (window.XRWebGLBinding && this.layersEnabled) {
-									this.addLayer(baseLayer);
-								} else {
-									session.updateRenderState({
-										baseLayer: baseLayer
-									});
-								}
-
+								session.updateRenderState({
+									baseLayer: baseLayer
+								});
 								_context.next = 19;
 								return session.requestReferenceSpace(referenceSpaceType);
 
@@ -23337,35 +22928,13 @@ module.exports = anime;
 								return _context.stop();
 						}
 					}
-				}, _callee, this);
+				}, _callee);
 			}));
 
 			return function (_x) {
 				return _ref.apply(this, arguments);
 			};
 		}();
-
-		this.addLayer = function (layer) {
-			if (!window.XRWebGLBinding || !this.layersEnabled || !session) {
-				return;
-			}
-
-			layers.push(layer);
-			session.updateRenderState({
-				layers: layers
-			});
-		};
-
-		this.removeLayer = function (layer) {
-			if (!window.XRWebGLBinding || !this.layersEnabled || !session) {
-				return;
-			}
-
-			layers.splice(layers.indexOf(layer), 1);
-			session.updateRenderState({
-				layers: layers
-			});
-		};
 
 		function onInputSourcesChange(event) {
 			var inputSources = session.inputSources; // Assign inputSources to available controllers
@@ -23462,10 +23031,6 @@ module.exports = anime;
 			camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
 		}
 
-		this.setPoseTarget = function (object) {
-			if (object !== undefined) poseTarget = object;
-		};
-
 		this.getCamera = function (camera) {
 			cameraVR.near = cameraR.near = cameraL.near = camera.near;
 			cameraVR.far = cameraR.far = cameraL.far = camera.far;
@@ -23482,7 +23047,6 @@ module.exports = anime;
 
 			var parent = camera.parent;
 			var cameras = cameraVR.cameras;
-			var object = poseTarget || camera;
 			updateCamera(cameraVR, parent);
 
 			for (var i = 0; i < cameras.length; i++) {
@@ -23490,8 +23054,10 @@ module.exports = anime;
 			} // update camera and its children
 
 
-			object.matrixWorld.copy(cameraVR.matrixWorld);
-			var children = object.children;
+			camera.matrixWorld.copy(cameraVR.matrixWorld);
+			camera.matrix.copy(cameraVR.matrix);
+			camera.matrix.decompose(camera.position, camera.quaternion, camera.scale);
+			var children = camera.children;
 
 			for (var _i3 = 0, l = children.length; _i3 < l; _i3++) {
 				children[_i3].updateMatrixWorld(true);
@@ -23516,6 +23082,7 @@ module.exports = anime;
 
 			if (pose !== null) {
 				var views = pose.views;
+				var baseLayer = session.renderState.baseLayer;
 				renderer.setFramebuffer(baseLayer.framebuffer);
 				var cameraVRNeedsUpdate = false; // check if it's necessary to rebuild cameraVR's camera list
 
@@ -24254,8 +23821,9 @@ module.exports = anime;
 			_this.info = info;
 		}
 
-		initGLContext();
-		var xr = typeof navigator !== 'undefined' && 'xr' in navigator ? new WebXRManager(_this, _gl) : new WebVRManager(_this);
+		initGLContext(); // xr
+
+		var xr = new WebXRManager(_this, _gl);
 		this.xr = xr; // shadow map
 
 		var shadowMap = new WebGLShadowMap(_this, objects, capabilities.maxTextureSize);
@@ -24773,12 +24341,7 @@ module.exports = anime;
 			state.buffers.depth.setTest(true);
 			state.buffers.depth.setMask(true);
 			state.buffers.color.setMask(true);
-			state.setPolygonOffset(false);
-
-			if (xr.enabled && xr.submitFrame) {
-				xr.submitFrame();
-			} // _gl.finish();
-
+			state.setPolygonOffset(false); // _gl.finish();
 
 			renderStateStack.pop();
 
@@ -25188,25 +24751,7 @@ module.exports = anime;
 
 		function materialNeedsLights(material) {
 			return material.isMeshLambertMaterial || material.isMeshToonMaterial || material.isMeshPhongMaterial || material.isMeshStandardMaterial || material.isShadowMaterial || material.isShaderMaterial && material.lights === true;
-		} // this.setTexture2D = setTexture2D;
-
-
-		this.setTexture2D = function () {
-			var warned = false; // backwards compatibility: peel texture.texture
-
-			return function setTexture2D(texture, slot) {
-				if (texture && texture.isWebGLRenderTarget) {
-					if (!warned) {
-						console.warn("THREE.WebGLRenderer.setTexture2D: don't use render targets as textures. Use their .texture property instead.");
-						warned = true;
-					}
-
-					texture = texture.texture;
-				}
-
-				textures.setTexture2D(texture, slot);
-			};
-		}(); //
+		} //
 
 
 		this.setFramebuffer = function (value) {
@@ -35602,13 +35147,7 @@ module.exports = anime;
 							break;
 
 						case 'Geometry':
-							if ('THREE' in window && 'LegacyJSONLoader' in THREE) {
-								var geometryLoader = new THREE.LegacyJSONLoader();
-								geometry = geometryLoader.parse(data, this.resourcePath).geometry;
-							} else {
-								console.error('THREE.ObjectLoader: You have to import LegacyJSONLoader in order load geometry data of type "Geometry".');
-							}
-
+							console.error('THREE.ObjectLoader: Loading "Geometry" is not supported anymore.');
 							break;
 
 						default:
@@ -41443,10 +40982,6 @@ module.exports = anime;
 		);
 	}
 
-	function Face4(a, b, c, d, normal, color, materialIndex) {
-		console.warn('THREE.Face4 has been removed. A THREE.Face3 will be created instead.');
-		return new Face3(a, b, c, normal, color, materialIndex);
-	}
 	var LineStrip = 0;
 	var LinePieces = 1;
 	var NoColors = 0;
@@ -42475,6 +42010,9 @@ module.exports = anime;
 		setTexture: function setTexture() {
 			console.warn('THREE.WebGLRenderer: .setTexture() has been removed.');
 		},
+		setTexture2D: function setTexture2D() {
+			console.warn('THREE.WebGLRenderer: .setTexture2D() has been removed.');
+		},
 		setTextureCube: function setTextureCube() {
 			console.warn('THREE.WebGLRenderer: .setTextureCube() has been removed.');
 		},
@@ -42940,8 +42478,6 @@ module.exports = anime;
 	exports.EventDispatcher = EventDispatcher;
 	exports.ExtrudeBufferGeometry = ExtrudeGeometry;
 	exports.ExtrudeGeometry = ExtrudeGeometry;
-	exports.Face3 = Face3;
-	exports.Face4 = Face4;
 	exports.FaceColors = FaceColors;
 	exports.FileLoader = FileLoader;
 	exports.FlatShading = FlatShading;
@@ -46563,8 +46099,8 @@ THREE.GLTFLoader = ( function () {
 					cachedMaterial.vertexTangents = true;
 
 					// https://github.com/mrdoob/three.js/issues/11438#issuecomment-507003995
-					if ( material.normalScale ) material.normalScale.y *= -1;
-					if ( material.clearcoatNormalScale ) material.clearcoatNormalScale.y *= -1;
+					if ( cachedMaterial.normalScale ) cachedMaterial.normalScale.y *= -1;
+					if ( cachedMaterial.clearcoatNormalScale ) cachedMaterial.clearcoatNormalScale.y *= -1;
 
 				}
 
@@ -53648,7 +53184,7 @@ module.exports={
     "present": "0.0.6",
     "promise-polyfill": "^3.1.0",
     "super-animejs": "^3.1.0",
-    "super-three": "zakharvoit/three.js#1ea723bfd64f61476e3ee0e7b44158c95fabde95",
+    "super-three": "zakharvoit/three.js#86e042b301f9c7d5fe2e646517aa9111eb067b0e",
     "three-bmfont-text": "dmarcos/three-bmfont-text#1babdf8507c731a18f8af3b807292e2b9740955e",
     "webvr-polyfill": "^0.10.12"
   },
@@ -69546,7 +69082,7 @@ _dereq_('./core/a-mixin');
 _dereq_('./extras/components/');
 _dereq_('./extras/primitives/');
 
-console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #e501f597)');
+console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #2482063c)');
 console.log('THREE Version (https://github.com/supermedium/three.js):',
             pkg.dependencies['super-three']);
 console.log('WebVR Polyfill Version:', pkg.dependencies['webvr-polyfill']);
