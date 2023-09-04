@@ -311,7 +311,7 @@ module.exports.AScene = registerElement('a-scene', {
                   console.log('!!! layersEnabled should be layersEnabled=', vrManager.layersEnabled, ' but forcing it to be true');
                   vrManager.layersEnabled = true;
                   vrManager.setSession(xrSession);
-                  console.log('!!! after setSession call session.baseLayer=', xrSession.renderState.baseLayer());
+                  console.log('!!! after setSession call session.baseLayer=', xrSession.renderState.baseLayer);
                   xrSession.addEventListener('end', self.exitVRBound);
                   enterVRSuccess(resolve);
                 },
