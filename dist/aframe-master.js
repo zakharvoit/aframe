@@ -23117,6 +23117,7 @@ module.exports = anime;
 		var referenceSpace = null;
 		var referenceSpaceType = 'local-floor';
 		var pose = null;
+		var poseTarget = null;
 		var controllers = [];
 		var inputSourcesMap = new Map(); //
 
@@ -23388,6 +23389,10 @@ module.exports = anime;
 			camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
 		}
 
+		this.setPoseTarget = function (object) {
+			if (object !== undefined) poseTarget = object;
+		};
+
 		this.getCamera = function (camera) {
 			cameraVR.near = cameraR.near = cameraL.near = camera.near;
 			cameraVR.far = cameraR.far = cameraL.far = camera.far;
@@ -23404,6 +23409,7 @@ module.exports = anime;
 
 			var parent = camera.parent;
 			var cameras = cameraVR.cameras;
+			var object = poseTarget || camera;
 			updateCamera(cameraVR, parent);
 
 			for (var i = 0; i < cameras.length; i++) {
@@ -23411,10 +23417,8 @@ module.exports = anime;
 			} // update camera and its children
 
 
-			camera.matrixWorld.copy(cameraVR.matrixWorld);
-			camera.matrix.copy(cameraVR.matrix);
-			camera.matrix.decompose(camera.position, camera.quaternion, camera.scale);
-			var children = camera.children;
+			object.matrixWorld.copy(cameraVR.matrixWorld);
+			var children = object.children;
 
 			for (var _i3 = 0, l = children.length; _i3 < l; _i3++) {
 				children[_i3].updateMatrixWorld(true);
@@ -53560,7 +53564,7 @@ module.exports={
     "present": "0.0.6",
     "promise-polyfill": "^3.1.0",
     "super-animejs": "^3.1.0",
-    "super-three": "zakharvoit/three.js#0098e6a9c5a10e6574c909976905aaa568361b5f",
+    "super-three": "zakharvoit/three.js#71f250e92c265f0f113f573db53021b4fa2ee826",
     "three-bmfont-text": "dmarcos/three-bmfont-text#1babdf8507c731a18f8af3b807292e2b9740955e",
     "webvr-polyfill": "^0.10.12"
   },
@@ -69458,7 +69462,7 @@ _dereq_('./core/a-mixin');
 _dereq_('./extras/components/');
 _dereq_('./extras/primitives/');
 
-console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #649a4def)');
+console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #7f6595a2)');
 console.log('THREE Version (https://github.com/supermedium/three.js):',
             pkg.dependencies['super-three']);
 console.log('WebVR Polyfill Version:', pkg.dependencies['webvr-polyfill']);
