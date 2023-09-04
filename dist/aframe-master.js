@@ -67099,7 +67099,7 @@ module.exports.AScene = registerElement('a-scene', {
                 function requestSuccess (xrSession) {
                   self.xrSession = xrSession;
                   vrManager.layersEnabled = xrInit.requiredFeatures.indexOf('layers') !== -1;
-                  console.log('!!! layersEnabled should be layersEnabled=', vrManager.layersEnabled, ' but forcing it to be false');
+                  console.log('!!! layersEnabled should be layersEnabled=', vrManager.layersEnabled, ' but forcing it to be true');
                   vrManager.layersEnabled = false;
                   vrManager.setSession(xrSession);
                   console.log('!!! after setSession call session.baseLayer=', xrSession.target.getBaseLayer());
@@ -69554,7 +69554,7 @@ _dereq_('./core/a-mixin');
 _dereq_('./extras/components/');
 _dereq_('./extras/primitives/');
 
-console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #420ca829)');
+console.log('A-Frame Version: 1.1.0 (Date 2023-09-04, Commit #36a395df)');
 console.log('THREE Version (https://github.com/supermedium/three.js):',
             pkg.dependencies['super-three']);
 console.log('WebVR Polyfill Version:', pkg.dependencies['webvr-polyfill']);
